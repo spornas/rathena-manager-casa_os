@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rAthena Manager - CasaOS</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --background: #f8f9fa;
+            --card: #ffffff;
+            --text: #212529;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .container {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: opacity 0.2s;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: #212529;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+        }
+        
+        .status-panel {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .status-panel.active {
+            display: block;
+            background: #e9f5ff;
+            border: 1px solid #b3d8ff;
+            color: #0066cc;
+        }
+        
+        .status-panel.error {
+            background: #fdf2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+        
+        .logo-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-text">
+            rAthena Manager<br><span class="tag">CasaOS Edition</span>
+        </div>
+        
+        <div class="card">
+            <h3>Selecionar Emulador</h3>
+            
+            <div class="form-group">
+                <label for="emulatorType">Tipo de Emulador:</label>
+                <select id="emulatorType" onChange="updateEmulator(this.value)">
+                    <option value="rathena" ${emulatorType === 'rathena' ? 'selected' : ''}>rAthena</option>
+                    <option value="hercules" ${emulatorType === 'hercules' ? 'selected' : ''}>Hercules</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="installPath">Pasta de Instalação:</label>
+                <input type="text" id="installPath" value="${INSTALL_PATH:-/opt/rathena}" onChange="updatePath(this.value)" readonly>
+            </div>
+            
+            <button class="btn btn-primary" onClick="installEmulator()">Baixar/Atualizar Emulador</button>
+            <button class="btn btn-secondary" onClick="refreshStatus()">Atualizar Status</button>
+        </div>
+        
+        <div class="status-panel" id="statusPanel">
+            <strong>Status:</strong> <span id="statusText">Pronto</span>
+        </div>
+        
+        <div class="card" style="margin-top: 20px;">
+            <h3>Informações</h3>
+            <p>Este aplicativo gerencia emuladores rAthena e Hercules para o CasaOS.</p>
+            <p>
+                <strong>rAthena:</strong> https://github.com/rathena/rathena<br>
+                <strong>Hercules:</strong> https://github.com/HerculesWS/Hercules
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Load current settings from environment (CasaOS injects these)
+        const emulatorType = "${EMULATOR_TYPE:-rathena}";
+        const installPath = "${INSTALL_PATH:-/opt/rathena}";
+        
+        document.getElementById('emulatorType').value = emulatorType;
+        document.getElementById('installPath').value = installPath;
+        
+        function updateEmulator(type) {
+            // Atualiza a seleção - CasaOS reiniciará com novo tipo
+            console.log('Selecionado:', type);
+        }
+        
+        function updatePath(path) {
+            // CasaOS trata o caminho - este campo é de leitura
+        }
+        
+        async function installEmulator() {
+            const type = document.getElementById('emulatorType').value;
+            const path = document.getElementById('installPath').value;
+            
+            const panel = document.getElementById('statusPanel');
+            const statusText = document.getElementById('statusText');
+            panel.classList.add('active');
+            panel.classList.remove('error');
+            statusText.textContent = 'Instalando...';
+            
+            try {
+                const response = await fetch('/api/status', {method: 'GET'});
+                const data = await response.json();
+                statusText.textContent = 'Conectado - ' + data.emulator;
+                
+                // Simular instalação - em produção, isso aciona o docker compose
+                statusText.textContent = 'Concluído - ' + type + ' em ' + path;
+                
+                // Em um caso real, aqui chamaríamos:
+                // window.location.href = '/restart';
+                
+            } catch (error) {
+                panel.classList.add('error');
+                statusText.textContent = 'Erro ao conectar';
+                console.error(error);
+            }
+        }
+        
+        async function refreshStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                const panel = document.getElementById('statusPanel');
+                const statusText = document.getElementById('statusText');
+                
+                if (data.emulator) {
+                    statusText.textContent = 'Rodando - ' + data.emulator + ' em ' + data.path;
+                    panel.classList.remove('error');
+                } else {
+                    statusText.textContent = 'Parado';
+                    panel.classList.add('error');
+                }
+            } catch (error) {
+                document.getElementById('statusPanel').classList.add('error');
+                document.getElementById('statusText').textContent = 'Sem conexão';
+            }
+        }
+        
+        // Initialize
+        refreshStatus();
+    </script>
+</body>
+</html>
