@@ -1,0 +1,1 @@
+# rathena-manager-casa_os
