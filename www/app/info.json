@@ -4,7 +4,7 @@
   "category": "development",
   "icon": "https://cdn.jsdelivr.net/npm/@iconify-json/mdi/svg/512x512/badge-circle-outline.svg",
   "tags": ["rathena", "hercules", "emulator", "game"],
-  "port": 80,
+  "port": 8080,
   "targetPort": 80,
   "protocol": "http"
 }
